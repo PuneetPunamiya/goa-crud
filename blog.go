@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 )
 
 // blog service example implementation.
@@ -148,35 +147,38 @@ func ghOAuthURLForCode(code string) string {
 		clientID, clientSecret, code)
 }
 
-
 // Github authentication to post a new blog
 func (s *blogsrvc) Oauth(ctx context.Context, p *blog.OauthPayload) (res string, err error) {
-	s.logger.Print("blog.oauth")
+	s.logger.Print("blog.oauth", "token:", *p.Token)
 
 	reqURL := ghOAuthURLForCode(*p.Token)
-	log.Print("Request url", reqURL)
+	s.logger.Print("Request url", reqURL)
 
 	req, err := http.NewRequest(http.MethodPost, reqURL, nil)
 	if err != nil {
-		fmt.Fprintf(os.Stdout, "could not create HTTP request: %v", err)
+		s.logger.Printf("could not create HTTP request: %v", err)
+		return "", err
 	}
+
 	req.Header.Set("accept", "application/json")
-	log.Print("req", req)
+	s.logger.Print("req", req)
 
 	// // Send out the HTTP request
 	httpClient := http.Client{}
 	result, err := httpClient.Do(req)
 	if err != nil {
-		println(os.Stdout, "could not send HTTP request: %v", err)
+		s.logger.Printf("could not send HTTP request: %v", err)
+		return "", err
 	}
-	log.Print("result", result)
+	s.logger.Print("result", result)
 
 	// Parse the request body into the `OAuthAccessResponse` struct
 	var t OAuthAccessResponse
 	if err := json.NewDecoder(result.Body).Decode(&t); err != nil {
-		fmt.Fprintf(os.Stdout, "could not parse JSON response: %v", err)
+		s.logger.Printf("could not parse JSON response: %v", err)
+		return "", err
 	}
-	log.Println("This is the access token", t.AccessToken)
+	s.logger.Println("This is the access token", t.AccessToken)
 
 	// username, id := getUserDetails(t.AccessToken)
 
