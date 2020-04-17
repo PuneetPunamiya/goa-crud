@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
 // blog service example implementation.
@@ -17,16 +18,22 @@ type blogsrvc struct {
 }
 
 type OAuthAccessResponse struct {
-	AccessToken string
+	AccessToken string `json:"access_token"`
 }
 
-type Code struct {
-	Token string
+type userDetails struct {
+	id    int
+	email string
 }
+
+//
+var (
+	Key = []byte("secret")
+)
+
+var users = make([]userDetails, 0)
 
 var blog_store = make([]*blog.Storedblog, 0)
-
-var token = ""
 
 // NewBlog returns the blog service implementation.
 func NewBlog(logger *log.Logger) blog.Service {
@@ -134,14 +141,15 @@ func getUserDetails(accessToken string) (string, int) {
 	if err := json.Unmarshal(body, &userData); err != nil {
 		log.Print(err)
 	}
+
 	username := userData["login"].(string)
 	id := userData["id"].(float64)
 	return string(username), int(id)
 }
 
 func ghOAuthURLForCode(code string) string {
-	clientID := ""
-	clientSecret := ""
+	clientID := "89dfc28174f0f37f2e9a"
+	clientSecret := "3228778d2b927fbc5b11687f138e7c17dbf11cdb"
 	return fmt.Sprintf(
 		"https://github.com/login/oauth/access_token?client_id=%s&client_secret=%s&code=%s",
 		clientID, clientSecret, code)
@@ -149,41 +157,51 @@ func ghOAuthURLForCode(code string) string {
 
 // Github authentication to post a new blog
 func (s *blogsrvc) Oauth(ctx context.Context, p *blog.OauthPayload) (res string, err error) {
-	s.logger.Print("blog.oauth", "token:", *p.Token)
+	s.logger.Print("blog.oauth")
+
+	s.logger.Println("Auth token", *p.Token)
 
 	reqURL := ghOAuthURLForCode(*p.Token)
-	s.logger.Print("Request url", reqURL)
 
 	req, err := http.NewRequest(http.MethodPost, reqURL, nil)
 	if err != nil {
-		s.logger.Printf("could not create HTTP request: %v", err)
-		return "", err
+		fmt.Fprintf(os.Stdout, "could not create HTTP request: %v", err)
 	}
-
 	req.Header.Set("accept", "application/json")
-	s.logger.Print("req", req)
 
 	// // Send out the HTTP request
 	httpClient := http.Client{}
 	result, err := httpClient.Do(req)
 	if err != nil {
-		s.logger.Printf("could not send HTTP request: %v", err)
-		return "", err
+		println(os.Stdout, "could not send HTTP request: %v", err)
 	}
-	s.logger.Print("result", result)
 
 	// Parse the request body into the `OAuthAccessResponse` struct
 	var t OAuthAccessResponse
 	if err := json.NewDecoder(result.Body).Decode(&t); err != nil {
-		s.logger.Printf("could not parse JSON response: %v", err)
-		return "", err
+		fmt.Fprintf(os.Stdout, "could not parse JSON response: %v", err)
 	}
 	s.logger.Println("This is the access token", t.AccessToken)
 
-	// username, id := getUserDetails(t.AccessToken)
+	username, id := getUserDetails(t.AccessToken)
 
-	// log.Print("Username ", username)
-	// log.Print(id)
+	s.logger.Println("Username ", username)
+	s.logger.Println(id)
 
-	return *p.Token, nil
+	data := userDetails{id: id, email: username}
+
+	users = append(users, data)
+	s.logger.Println("Users", users)
+
+	jwtToken := GenerateJWT(id, username)
+
+	s.logger.Println("Jwt token: ", jwtToken)
+
+	return jwtToken, nil
+}
+
+// Getting auth
+func (s *blogsrvc) JWT(ctx context.Context, p *blog.JWTPayload) (res string, err error) {
+	s.logger.Print("blog.jwt")
+	return
 }

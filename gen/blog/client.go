@@ -22,10 +22,11 @@ type Client struct {
 	AddEndpoint    goa.Endpoint
 	ShowEndpoint   goa.Endpoint
 	OauthEndpoint  goa.Endpoint
+	JWTEndpoint    goa.Endpoint
 }
 
 // NewClient initializes a "blog" service client given the endpoints.
-func NewClient(create, list, remove, update, add, show, oauth goa.Endpoint) *Client {
+func NewClient(create, list, remove, update, add, show, oauth, jwt goa.Endpoint) *Client {
 	return &Client{
 		CreateEndpoint: create,
 		ListEndpoint:   list,
@@ -34,6 +35,7 @@ func NewClient(create, list, remove, update, add, show, oauth goa.Endpoint) *Cli
 		AddEndpoint:    add,
 		ShowEndpoint:   show,
 		OauthEndpoint:  oauth,
+		JWTEndpoint:    jwt,
 	}
 }
 
@@ -96,6 +98,16 @@ func (c *Client) Show(ctx context.Context, p *Blog) (res *Blog, err error) {
 func (c *Client) Oauth(ctx context.Context, p *OauthPayload) (res string, err error) {
 	var ires interface{}
 	ires, err = c.OauthEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(string), nil
+}
+
+// JWT calls the "jwt" endpoint of the "blog" service.
+func (c *Client) JWT(ctx context.Context, p *JWTPayload) (res string, err error) {
+	var ires interface{}
+	ires, err = c.JWTEndpoint(ctx, p)
 	if err != nil {
 		return
 	}

@@ -28,6 +28,7 @@ type Server struct {
 	Add    http.Handler
 	Show   http.Handler
 	Oauth  http.Handler
+	JWT    http.Handler
 	CORS   http.Handler
 }
 
@@ -71,10 +72,12 @@ func New(
 			{"Add", "POST", "/{id}/comments"},
 			{"Show", "GET", "/{id}"},
 			{"Oauth", "POST", "/oauth/redirect"},
+			{"JWT", "POST", "/oauth"},
 			{"CORS", "OPTIONS", "/"},
 			{"CORS", "OPTIONS", "/{id}"},
 			{"CORS", "OPTIONS", "/{id}/comments"},
 			{"CORS", "OPTIONS", "/oauth/redirect"},
+			{"CORS", "OPTIONS", "/oauth"},
 			{"CORS", "OPTIONS", "/openapi.json"},
 			{"./gen/http/openapi.json", "GET", "/openapi.json"},
 		},
@@ -85,6 +88,7 @@ func New(
 		Add:    NewAddHandler(e.Add, mux, decoder, encoder, errhandler, formatter),
 		Show:   NewShowHandler(e.Show, mux, decoder, encoder, errhandler, formatter),
 		Oauth:  NewOauthHandler(e.Oauth, mux, decoder, encoder, errhandler, formatter),
+		JWT:    NewJWTHandler(e.JWT, mux, decoder, encoder, errhandler, formatter),
 		CORS:   NewCORSHandler(),
 	}
 }
@@ -101,6 +105,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.Add = m(s.Add)
 	s.Show = m(s.Show)
 	s.Oauth = m(s.Oauth)
+	s.JWT = m(s.JWT)
 	s.CORS = m(s.CORS)
 }
 
@@ -113,6 +118,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountAddHandler(mux, h.Add)
 	MountShowHandler(mux, h.Show)
 	MountOauthHandler(mux, h.Oauth)
+	MountJWTHandler(mux, h.JWT)
 	MountCORSHandler(mux, h.CORS)
 	MountGenHTTPOpenapiJSON(mux, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./gen/http/openapi.json")
@@ -469,6 +475,57 @@ func NewOauthHandler(
 	})
 }
 
+// MountJWTHandler configures the mux to serve the "blog" service "jwt"
+// endpoint.
+func MountJWTHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := handleBlogOrigin(h).(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/oauth", f)
+}
+
+// NewJWTHandler creates a HTTP handler which loads the HTTP request and calls
+// the "blog" service "jwt" endpoint.
+func NewJWTHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeJWTRequest(mux, decoder)
+		encodeResponse = EncodeJWTResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "jwt")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "blog")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
 // MountGenHTTPOpenapiJSON configures the mux to serve GET request made to
 // "/openapi.json".
 func MountGenHTTPOpenapiJSON(mux goahttp.Muxer, h http.Handler) {
@@ -489,6 +546,7 @@ func MountCORSHandler(mux goahttp.Muxer, h http.Handler) {
 	mux.Handle("OPTIONS", "/{id}", f)
 	mux.Handle("OPTIONS", "/{id}/comments", f)
 	mux.Handle("OPTIONS", "/oauth/redirect", f)
+	mux.Handle("OPTIONS", "/oauth", f)
 	mux.Handle("OPTIONS", "/openapi.json", f)
 }
 
@@ -502,7 +560,7 @@ func NewCORSHandler() http.Handler {
 // handleBlogOrigin applies the CORS response headers corresponding to the
 // origin for the service blog.
 func handleBlogOrigin(h http.Handler) http.Handler {
-	spec0 := regexp.MustCompile(".*local.thaha.xyz")
+	spec0 := regexp.MustCompile(".*localhost")
 	origHndlr := h.(http.HandlerFunc)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
@@ -520,7 +578,7 @@ func handleBlogOrigin(h http.Handler) http.Handler {
 			if acrm := r.Header.Get("Access-Control-Request-Method"); acrm != "" {
 				// We are handling a preflight request
 				w.Header().Set("Access-Control-Allow-Methods", "GET, POST")
-				w.Header().Set("Access-Control-Allow-Headers", "X-Shared-Secret")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 			}
 			origHndlr(w, r)
 			return

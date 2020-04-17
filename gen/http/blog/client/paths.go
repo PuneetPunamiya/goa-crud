@@ -45,3 +45,8 @@ func ShowBlogPath(id uint32) string {
 func OauthBlogPath() string {
 	return "/oauth/redirect"
 }
+
+// JWTBlogPath returns the URL path to the blog service jwt HTTP endpoint.
+func JWTBlogPath() string {
+	return "/oauth"
+}

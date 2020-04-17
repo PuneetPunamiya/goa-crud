@@ -254,6 +254,14 @@ func NewOauthPayload(body *OauthRequestBody) *blog.OauthPayload {
 	return v
 }
 
+// NewJWTPayload builds a blog service jwt endpoint payload.
+func NewJWTPayload(auth *string) *blog.JWTPayload {
+	v := &blog.JWTPayload{}
+	v.Auth = auth
+
+	return v
+}
+
 // ValidateCreateRequestBody runs the validations defined on CreateRequestBody
 func ValidateCreateRequestBody(body *CreateRequestBody) (err error) {
 	if body.Name != nil {

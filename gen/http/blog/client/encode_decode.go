@@ -500,6 +500,71 @@ func DecodeOauthResponse(decoder func(*http.Response) goahttp.Decoder, restoreBo
 	}
 }
 
+// BuildJWTRequest instantiates a HTTP request object with method and path set
+// to call the "blog" service "jwt" endpoint
+func (c *Client) BuildJWTRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: JWTBlogPath()}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("blog", "jwt", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeJWTRequest returns an encoder for requests sent to the blog jwt server.
+func EncodeJWTRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
+	return func(req *http.Request, v interface{}) error {
+		p, ok := v.(*blog.JWTPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("blog", "jwt", "*blog.JWTPayload", v)
+		}
+		if p.Auth != nil {
+			head := *p.Auth
+			req.Header.Set("X-Authorization", head)
+		}
+		return nil
+	}
+}
+
+// DecodeJWTResponse returns a decoder for responses returned by the blog jwt
+// endpoint. restoreBody controls whether the response body should be restored
+// after having been read.
+func DecodeJWTResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+	return func(resp *http.Response) (interface{}, error) {
+		if restoreBody {
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("blog", "jwt", err)
+			}
+			return body, nil
+		default:
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("blog", "jwt", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // marshalBlogCommentsToCommentsRequestBody builds a value of type
 // *CommentsRequestBody from a value of type *blog.Comments.
 func marshalBlogCommentsToCommentsRequestBody(v *blog.Comments) *CommentsRequestBody {

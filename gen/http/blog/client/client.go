@@ -38,6 +38,9 @@ type Client struct {
 	// Oauth Doer is the HTTP client used to make requests to the oauth endpoint.
 	OauthDoer goahttp.Doer
 
+	// JWT Doer is the HTTP client used to make requests to the jwt endpoint.
+	JWTDoer goahttp.Doer
+
 	// CORS Doer is the HTTP client used to make requests to the  endpoint.
 	CORSDoer goahttp.Doer
 
@@ -68,6 +71,7 @@ func NewClient(
 		AddDoer:             doer,
 		ShowDoer:            doer,
 		OauthDoer:           doer,
+		JWTDoer:             doer,
 		CORSDoer:            doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
@@ -230,6 +234,30 @@ func (c *Client) Oauth() goa.Endpoint {
 		resp, err := c.OauthDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("blog", "oauth", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// JWT returns an endpoint that makes HTTP requests to the blog service jwt
+// server.
+func (c *Client) JWT() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeJWTRequest(c.encoder)
+		decodeResponse = DecodeJWTResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildJWTRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.JWTDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("blog", "jwt", err)
 		}
 		return decodeResponse(resp)
 	}

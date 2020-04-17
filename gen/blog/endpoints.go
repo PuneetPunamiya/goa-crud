@@ -22,6 +22,7 @@ type Endpoints struct {
 	Add    goa.Endpoint
 	Show   goa.Endpoint
 	Oauth  goa.Endpoint
+	JWT    goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "blog" service with endpoints.
@@ -34,6 +35,7 @@ func NewEndpoints(s Service) *Endpoints {
 		Add:    NewAddEndpoint(s),
 		Show:   NewShowEndpoint(s),
 		Oauth:  NewOauthEndpoint(s),
+		JWT:    NewJWTEndpoint(s),
 	}
 }
 
@@ -46,6 +48,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Add = m(e.Add)
 	e.Show = m(e.Show)
 	e.Oauth = m(e.Oauth)
+	e.JWT = m(e.JWT)
 }
 
 // NewCreateEndpoint returns an endpoint function that calls the method
@@ -107,5 +110,14 @@ func NewOauthEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
 		p := req.(*OauthPayload)
 		return s.Oauth(ctx, p)
+	}
+}
+
+// NewJWTEndpoint returns an endpoint function that calls the method "jwt" of
+// service "blog".
+func NewJWTEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req interface{}) (interface{}, error) {
+		p := req.(*JWTPayload)
+		return s.JWT(ctx, p)
 	}
 }

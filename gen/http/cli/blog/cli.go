@@ -23,7 +23,7 @@ import (
 //    command (subcommand1|subcommand2|...)
 //
 func UsageCommands() string {
-	return `blog (create|list|remove|update|add|show|oauth)
+	return `blog (create|list|remove|update|add|show|oauth|jwt)
 `
 }
 
@@ -32,20 +32,20 @@ func UsageExamples() string {
 	return os.Args[0] + ` blog create --body '{
       "comments": [
          {
-            "comments": "Vel nam dolores et minus.",
-            "id": 339538165
+            "comments": "Et et incidunt cum omnis eligendi.",
+            "id": 3140786710
          },
          {
-            "comments": "Vel nam dolores et minus.",
-            "id": 339538165
+            "comments": "Et et incidunt cum omnis eligendi.",
+            "id": 3140786710
          },
          {
-            "comments": "Vel nam dolores et minus.",
-            "id": 339538165
+            "comments": "Et et incidunt cum omnis eligendi.",
+            "id": 3140786710
          }
       ],
-      "id": 2397399195,
-      "name": "gxr"
+      "id": 1089966870,
+      "name": "x88"
    }'` + "\n" +
 		""
 }
@@ -84,6 +84,9 @@ func ParseEndpoint(
 
 		blogOauthFlags    = flag.NewFlagSet("oauth", flag.ExitOnError)
 		blogOauthBodyFlag = blogOauthFlags.String("body", "REQUIRED", "")
+
+		blogJWTFlags    = flag.NewFlagSet("jwt", flag.ExitOnError)
+		blogJWTAuthFlag = blogJWTFlags.String("auth", "", "")
 	)
 	blogFlags.Usage = blogUsage
 	blogCreateFlags.Usage = blogCreateUsage
@@ -93,6 +96,7 @@ func ParseEndpoint(
 	blogAddFlags.Usage = blogAddUsage
 	blogShowFlags.Usage = blogShowUsage
 	blogOauthFlags.Usage = blogOauthUsage
+	blogJWTFlags.Usage = blogJWTUsage
 
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
 		return nil, nil, err
@@ -149,6 +153,9 @@ func ParseEndpoint(
 			case "oauth":
 				epf = blogOauthFlags
 
+			case "jwt":
+				epf = blogJWTFlags
+
 			}
 
 		}
@@ -195,6 +202,9 @@ func ParseEndpoint(
 			case "oauth":
 				endpoint = c.Oauth()
 				data, err = blogc.BuildOauthPayload(*blogOauthBodyFlag)
+			case "jwt":
+				endpoint = c.JWT()
+				data, err = blogc.BuildJWTPayload(*blogJWTAuthFlag)
 			}
 		}
 	}
@@ -219,6 +229,7 @@ COMMAND:
     add: Add new blog and return its ID.
     show: Show blog based on the id given
     oauth: Github authentication to post a new blog
+    jwt: Getting auth
 
 Additional help:
     %s blog COMMAND --help
@@ -234,20 +245,20 @@ Example:
     `+os.Args[0]+` blog create --body '{
       "comments": [
          {
-            "comments": "Vel nam dolores et minus.",
-            "id": 339538165
+            "comments": "Et et incidunt cum omnis eligendi.",
+            "id": 3140786710
          },
          {
-            "comments": "Vel nam dolores et minus.",
-            "id": 339538165
+            "comments": "Et et incidunt cum omnis eligendi.",
+            "id": 3140786710
          },
          {
-            "comments": "Vel nam dolores et minus.",
-            "id": 339538165
+            "comments": "Et et incidunt cum omnis eligendi.",
+            "id": 3140786710
          }
       ],
-      "id": 2397399195,
-      "name": "gxr"
+      "id": 1089966870,
+      "name": "x88"
    }'
 `, os.Args[0])
 }
@@ -269,7 +280,7 @@ Remove blog from storage
     -id UINT32: ID of blog to remove
 
 Example:
-    `+os.Args[0]+` blog remove --id 2346242838
+    `+os.Args[0]+` blog remove --id 1803061919
 `, os.Args[0])
 }
 
@@ -284,20 +295,20 @@ Example:
     `+os.Args[0]+` blog update --body '{
       "comments": [
          {
-            "comments": "Vel nam dolores et minus.",
-            "id": 339538165
+            "comments": "Et et incidunt cum omnis eligendi.",
+            "id": 3140786710
          },
          {
-            "comments": "Vel nam dolores et minus.",
-            "id": 339538165
+            "comments": "Et et incidunt cum omnis eligendi.",
+            "id": 3140786710
          },
          {
-            "comments": "Vel nam dolores et minus.",
-            "id": 339538165
+            "comments": "Et et incidunt cum omnis eligendi.",
+            "id": 3140786710
          }
       ],
-      "name": "Corporis voluptatibus."
-   }' --id 703761309
+      "name": "Nihil consequatur sunt asperiores."
+   }' --id 4088298408
 `, os.Args[0])
 }
 
@@ -311,10 +322,10 @@ Add new blog and return its ID.
 Example:
     `+os.Args[0]+` blog add --body '{
       "comments": {
-         "comments": "Vel nam dolores et minus.",
-         "id": 339538165
+         "comments": "Et et incidunt cum omnis eligendi.",
+         "id": 3140786710
       }
-   }' --id 2027675441
+   }' --id 1284183828
 `, os.Args[0])
 }
 
@@ -329,20 +340,20 @@ Example:
     `+os.Args[0]+` blog show --body '{
       "comments": [
          {
-            "comments": "Vel nam dolores et minus.",
-            "id": 339538165
+            "comments": "Et et incidunt cum omnis eligendi.",
+            "id": 3140786710
          },
          {
-            "comments": "Vel nam dolores et minus.",
-            "id": 339538165
+            "comments": "Et et incidunt cum omnis eligendi.",
+            "id": 3140786710
          },
          {
-            "comments": "Vel nam dolores et minus.",
-            "id": 339538165
+            "comments": "Et et incidunt cum omnis eligendi.",
+            "id": 3140786710
          }
       ],
-      "name": "w7g"
-   }' --id 4041756045
+      "name": "vq2"
+   }' --id 3056043812
 `, os.Args[0])
 }
 
@@ -354,7 +365,18 @@ Github authentication to post a new blog
 
 Example:
     `+os.Args[0]+` blog oauth --body '{
-      "token": "Voluptate excepturi totam ducimus."
+      "token": "Est placeat."
    }'
+`, os.Args[0])
+}
+
+func blogJWTUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] blog jwt -auth STRING
+
+Getting auth
+    -auth STRING: 
+
+Example:
+    `+os.Args[0]+` blog jwt --auth "Tenetur numquam iste et eos."
 `, os.Args[0])
 }

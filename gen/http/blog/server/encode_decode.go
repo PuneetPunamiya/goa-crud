@@ -291,6 +291,35 @@ func DecodeOauthRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.D
 	}
 }
 
+// EncodeJWTResponse returns an encoder for responses returned by the blog jwt
+// endpoint.
+func EncodeJWTResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
+	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
+		res := v.(string)
+		enc := encoder(ctx, w)
+		body := res
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeJWTRequest returns a decoder for requests sent to the blog jwt
+// endpoint.
+func DecodeJWTRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
+	return func(r *http.Request) (interface{}, error) {
+		var (
+			auth *string
+		)
+		authRaw := r.Header.Get("X-Authorization")
+		if authRaw != "" {
+			auth = &authRaw
+		}
+		payload := NewJWTPayload(auth)
+
+		return payload, nil
+	}
+}
+
 // unmarshalCommentsRequestBodyToBlogComments builds a value of type
 // *blog.Comments from a value of type *CommentsRequestBody.
 func unmarshalCommentsRequestBodyToBlogComments(v *CommentsRequestBody) *blog.Comments {
