@@ -17,12 +17,8 @@ import (
 // CreateRequestBody is the type of the "blog" service "create" endpoint HTTP
 // request body.
 type CreateRequestBody struct {
-	// ID of a person
-	ID *uint32 `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Name of person
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// Comments
-	Comments []*CommentsRequestBody `form:"comments,omitempty" json:"comments,omitempty" xml:"comments,omitempty"`
+	// Adding a new blog
+	Blog *BlogRequestBody `form:"blog,omitempty" json:"blog,omitempty" xml:"blog,omitempty"`
 }
 
 // UpdateRequestBody is the type of the "blog" service "update" endpoint HTTP
@@ -118,6 +114,16 @@ type CommentsResponse struct {
 	Comments *string `form:"comments,omitempty" json:"comments,omitempty" xml:"comments,omitempty"`
 }
 
+// BlogRequestBody is used to define fields on request body types.
+type BlogRequestBody struct {
+	// ID of a person
+	ID *uint32 `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Name of person
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Comments
+	Comments []*CommentsRequestBody `form:"comments,omitempty" json:"comments,omitempty" xml:"comments,omitempty"`
+}
+
 // CommentsRequestBody is used to define fields on request body types.
 type CommentsRequestBody struct {
 	// ID of a comment
@@ -180,18 +186,13 @@ func NewShowResponseBody(res *blog.Blog) *ShowResponseBody {
 	return body
 }
 
-// NewCreateBlog builds a blog service create endpoint payload.
-func NewCreateBlog(body *CreateRequestBody) *blog.Blog {
-	v := &blog.Blog{
-		ID:   body.ID,
-		Name: body.Name,
+// NewCreatePayload builds a blog service create endpoint payload.
+func NewCreatePayload(body *CreateRequestBody, auth string) *blog.CreatePayload {
+	v := &blog.CreatePayload{}
+	if body.Blog != nil {
+		v.Blog = unmarshalBlogRequestBodyToBlogBlog(body.Blog)
 	}
-	if body.Comments != nil {
-		v.Comments = make([]*blog.Comments, len(body.Comments))
-		for i, val := range body.Comments {
-			v.Comments[i] = unmarshalCommentsRequestBodyToBlogComments(val)
-		}
-	}
+	v.Auth = auth
 
 	return v
 }
@@ -264,13 +265,10 @@ func NewJWTPayload(auth *string) *blog.JWTPayload {
 
 // ValidateCreateRequestBody runs the validations defined on CreateRequestBody
 func ValidateCreateRequestBody(body *CreateRequestBody) (err error) {
-	if body.Name != nil {
-		if utf8.RuneCountInString(*body.Name) > 100 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
+	if body.Blog != nil {
+		if err2 := ValidateBlogRequestBody(body.Blog); err2 != nil {
+			err = goa.MergeErrors(err, err2)
 		}
-	}
-	if len(body.Comments) > 100 {
-		err = goa.MergeErrors(err, goa.InvalidLengthError("body.comments", body.Comments, len(body.Comments), 100, false))
 	}
 	return
 }
@@ -288,6 +286,19 @@ func ValidateUpdateRequestBody(body *UpdateRequestBody) (err error) {
 
 // ValidateShowRequestBody runs the validations defined on ShowRequestBody
 func ValidateShowRequestBody(body *ShowRequestBody) (err error) {
+	if body.Name != nil {
+		if utf8.RuneCountInString(*body.Name) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
+		}
+	}
+	if len(body.Comments) > 100 {
+		err = goa.MergeErrors(err, goa.InvalidLengthError("body.comments", body.Comments, len(body.Comments), 100, false))
+	}
+	return
+}
+
+// ValidateBlogRequestBody runs the validations defined on BlogRequestBody
+func ValidateBlogRequestBody(body *BlogRequestBody) (err error) {
 	if body.Name != nil {
 		if utf8.RuneCountInString(*body.Name) > 100 {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))

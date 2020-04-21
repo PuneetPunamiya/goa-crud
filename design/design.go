@@ -56,10 +56,15 @@ var _ = Service("blog", func() {
 	//Method to post new blog
 	Method("create", func() {
 		Description("Add new blog and return its ID.")
-		Payload(Blog)
+		Payload(func() {
+			Attribute("blog", Blog, "Adding a new blog")
+			Attribute("auth", String, "Access github token")
+			Required("auth")
+		})
 		Result(Blog)
 		HTTP(func() {
 			POST("/")
+			Header("auth:X-Authorization") // JWT token passed in "X-Authorization" header
 			Response(StatusCreated)
 		})
 	})
@@ -78,7 +83,7 @@ var _ = Service("blog", func() {
 	Method("remove", func() {
 		Description("Remove blog from storage")
 		Payload(func() {
-			Field(1, "id", UInt32, "ID of blog to remove")
+			Attribute("id", UInt32, "ID of blog to remove")
 			Required("id")
 		})
 		Error("not_found", NotFound, "Blog not found")
@@ -92,9 +97,9 @@ var _ = Service("blog", func() {
 	Method("update", func() {
 		Description("Updating the existing blog")
 		Payload(func() {
-			Field(1, "id", UInt32, "ID of blog to be updated")
-			Field(2, "name", String, "Details of blog to be updated")
-			Field(3, "comments", ArrayOf(comments), "Comments to be updated")
+			Attribute("id", UInt32, "ID of blog to be updated")
+			Attribute("name", String, "Details of blog to be updated")
+			Attribute("comments", ArrayOf(comments), "Comments to be updated")
 			Required("name", "comments")
 		})
 		HTTP(func() {
@@ -129,7 +134,7 @@ var _ = Service("blog", func() {
 	Method("oauth", func() {
 		Description("Github authentication to post a new blog")
 		Payload(func() {
-			Field(1, "token", String, "Access github token")
+			Attribute("token", String, "Access github token")
 		})
 		Result(String)
 		HTTP(func() {
@@ -142,7 +147,7 @@ var _ = Service("blog", func() {
 	Method("jwt", func() {
 		Description("Getting auth")
 		Payload(func() {
-			Field(1, "auth", String, "Access github token")
+			Attribute("auth", String, "Access JWT token")
 		})
 		Result(String)
 		HTTP(func() {

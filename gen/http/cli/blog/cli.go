@@ -30,23 +30,25 @@ func UsageCommands() string {
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` blog create --body '{
-      "comments": [
-         {
-            "comments": "Et et incidunt cum omnis eligendi.",
-            "id": 3140786710
-         },
-         {
-            "comments": "Et et incidunt cum omnis eligendi.",
-            "id": 3140786710
-         },
-         {
-            "comments": "Et et incidunt cum omnis eligendi.",
-            "id": 3140786710
-         }
-      ],
-      "id": 1089966870,
-      "name": "x88"
-   }'` + "\n" +
+      "blog": {
+         "comments": [
+            {
+               "comments": "Incidunt cum omnis eligendi quam.",
+               "id": 686009256
+            },
+            {
+               "comments": "Incidunt cum omnis eligendi quam.",
+               "id": 686009256
+            },
+            {
+               "comments": "Incidunt cum omnis eligendi quam.",
+               "id": 686009256
+            }
+         ],
+         "id": 3301086490,
+         "name": "8lp"
+      }
+   }' --auth "Non eaque omnis."` + "\n" +
 		""
 }
 
@@ -64,6 +66,7 @@ func ParseEndpoint(
 
 		blogCreateFlags    = flag.NewFlagSet("create", flag.ExitOnError)
 		blogCreateBodyFlag = blogCreateFlags.String("body", "REQUIRED", "")
+		blogCreateAuthFlag = blogCreateFlags.String("auth", "REQUIRED", "")
 
 		blogListFlags = flag.NewFlagSet("list", flag.ExitOnError)
 
@@ -183,7 +186,7 @@ func ParseEndpoint(
 			switch epn {
 			case "create":
 				endpoint = c.Create()
-				data, err = blogc.BuildCreatePayload(*blogCreateBodyFlag)
+				data, err = blogc.BuildCreatePayload(*blogCreateBodyFlag, *blogCreateAuthFlag)
 			case "list":
 				endpoint = c.List()
 				data = nil
@@ -236,30 +239,33 @@ Additional help:
 `, os.Args[0], os.Args[0])
 }
 func blogCreateUsage() {
-	fmt.Fprintf(os.Stderr, `%s [flags] blog create -body JSON
+	fmt.Fprintf(os.Stderr, `%s [flags] blog create -body JSON -auth STRING
 
 Add new blog and return its ID.
     -body JSON: 
+    -auth STRING: 
 
 Example:
     `+os.Args[0]+` blog create --body '{
-      "comments": [
-         {
-            "comments": "Et et incidunt cum omnis eligendi.",
-            "id": 3140786710
-         },
-         {
-            "comments": "Et et incidunt cum omnis eligendi.",
-            "id": 3140786710
-         },
-         {
-            "comments": "Et et incidunt cum omnis eligendi.",
-            "id": 3140786710
-         }
-      ],
-      "id": 1089966870,
-      "name": "x88"
-   }'
+      "blog": {
+         "comments": [
+            {
+               "comments": "Incidunt cum omnis eligendi quam.",
+               "id": 686009256
+            },
+            {
+               "comments": "Incidunt cum omnis eligendi quam.",
+               "id": 686009256
+            },
+            {
+               "comments": "Incidunt cum omnis eligendi quam.",
+               "id": 686009256
+            }
+         ],
+         "id": 3301086490,
+         "name": "8lp"
+      }
+   }' --auth "Non eaque omnis."
 `, os.Args[0])
 }
 
@@ -280,7 +286,7 @@ Remove blog from storage
     -id UINT32: ID of blog to remove
 
 Example:
-    `+os.Args[0]+` blog remove --id 1803061919
+    `+os.Args[0]+` blog remove --id 2449075635
 `, os.Args[0])
 }
 
@@ -295,20 +301,20 @@ Example:
     `+os.Args[0]+` blog update --body '{
       "comments": [
          {
-            "comments": "Et et incidunt cum omnis eligendi.",
-            "id": 3140786710
+            "comments": "Incidunt cum omnis eligendi quam.",
+            "id": 686009256
          },
          {
-            "comments": "Et et incidunt cum omnis eligendi.",
-            "id": 3140786710
+            "comments": "Incidunt cum omnis eligendi quam.",
+            "id": 686009256
          },
          {
-            "comments": "Et et incidunt cum omnis eligendi.",
-            "id": 3140786710
+            "comments": "Incidunt cum omnis eligendi quam.",
+            "id": 686009256
          }
       ],
-      "name": "Nihil consequatur sunt asperiores."
-   }' --id 4088298408
+      "name": "Iure velit."
+   }' --id 895353352
 `, os.Args[0])
 }
 
@@ -322,10 +328,10 @@ Add new blog and return its ID.
 Example:
     `+os.Args[0]+` blog add --body '{
       "comments": {
-         "comments": "Et et incidunt cum omnis eligendi.",
-         "id": 3140786710
+         "comments": "Incidunt cum omnis eligendi quam.",
+         "id": 686009256
       }
-   }' --id 1284183828
+   }' --id 1741231856
 `, os.Args[0])
 }
 
@@ -340,20 +346,20 @@ Example:
     `+os.Args[0]+` blog show --body '{
       "comments": [
          {
-            "comments": "Et et incidunt cum omnis eligendi.",
-            "id": 3140786710
+            "comments": "Incidunt cum omnis eligendi quam.",
+            "id": 686009256
          },
          {
-            "comments": "Et et incidunt cum omnis eligendi.",
-            "id": 3140786710
+            "comments": "Incidunt cum omnis eligendi quam.",
+            "id": 686009256
          },
          {
-            "comments": "Et et incidunt cum omnis eligendi.",
-            "id": 3140786710
+            "comments": "Incidunt cum omnis eligendi quam.",
+            "id": 686009256
          }
       ],
-      "name": "vq2"
-   }' --id 3056043812
+      "name": "vgg"
+   }' --id 3390383988
 `, os.Args[0])
 }
 
@@ -365,7 +371,7 @@ Github authentication to post a new blog
 
 Example:
     `+os.Args[0]+` blog oauth --body '{
-      "token": "Est placeat."
+      "token": "A et ullam nihil et."
    }'
 `, os.Args[0])
 }
@@ -377,6 +383,6 @@ Getting auth
     -auth STRING: 
 
 Example:
-    `+os.Args[0]+` blog jwt --auth "Tenetur numquam iste et eos."
+    `+os.Args[0]+` blog jwt --auth "Quos distinctio blanditiis cum totam molestiae dolorum."
 `, os.Args[0])
 }

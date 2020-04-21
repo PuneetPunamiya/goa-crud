@@ -49,7 +49,18 @@ func DecodeCreateRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.
 		if err != nil {
 			return nil, err
 		}
-		payload := NewCreateBlog(&body)
+
+		var (
+			auth string
+		)
+		auth = r.Header.Get("X-Authorization")
+		if auth == "" {
+			err = goa.MergeErrors(err, goa.MissingFieldError("X-Authorization", "header"))
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewCreatePayload(&body, auth)
 
 		return payload, nil
 	}
@@ -318,6 +329,26 @@ func DecodeJWTRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Dec
 
 		return payload, nil
 	}
+}
+
+// unmarshalBlogRequestBodyToBlogBlog builds a value of type *blog.Blog from a
+// value of type *BlogRequestBody.
+func unmarshalBlogRequestBodyToBlogBlog(v *BlogRequestBody) *blog.Blog {
+	if v == nil {
+		return nil
+	}
+	res := &blog.Blog{
+		ID:   v.ID,
+		Name: v.Name,
+	}
+	if v.Comments != nil {
+		res.Comments = make([]*blog.Comments, len(v.Comments))
+		for i, val := range v.Comments {
+			res.Comments[i] = unmarshalCommentsRequestBodyToBlogComments(val)
+		}
+	}
+
+	return res
 }
 
 // unmarshalCommentsRequestBodyToBlogComments builds a value of type

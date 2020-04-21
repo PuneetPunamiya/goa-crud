@@ -18,25 +18,32 @@ import (
 
 // BuildCreatePayload builds the payload for the blog create endpoint from CLI
 // flags.
-func BuildCreatePayload(blogCreateBody string) (*blog.Blog, error) {
+func BuildCreatePayload(blogCreateBody string, blogCreateAuth string) (*blog.CreatePayload, error) {
 	var err error
 	var body CreateRequestBody
 	{
 		err = json.Unmarshal([]byte(blogCreateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"comments\": [\n         {\n            \"comments\": \"Et et incidunt cum omnis eligendi.\",\n            \"id\": 3140786710\n         },\n         {\n            \"comments\": \"Et et incidunt cum omnis eligendi.\",\n            \"id\": 3140786710\n         },\n         {\n            \"comments\": \"Et et incidunt cum omnis eligendi.\",\n            \"id\": 3140786710\n         }\n      ],\n      \"id\": 1089966870,\n      \"name\": \"x88\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"blog\": {\n         \"comments\": [\n            {\n               \"comments\": \"Incidunt cum omnis eligendi quam.\",\n               \"id\": 686009256\n            },\n            {\n               \"comments\": \"Incidunt cum omnis eligendi quam.\",\n               \"id\": 686009256\n            },\n            {\n               \"comments\": \"Incidunt cum omnis eligendi quam.\",\n               \"id\": 686009256\n            }\n         ],\n         \"id\": 3301086490,\n         \"name\": \"8lp\"\n      }\n   }'")
+		}
+		if body.Blog != nil {
+			if err2 := ValidateBlogRequestBody(body.Blog); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+		if err != nil {
+			return nil, err
 		}
 	}
-	v := &blog.Blog{
-		ID:   body.ID,
-		Name: body.Name,
+	var auth string
+	{
+		auth = blogCreateAuth
 	}
-	if body.Comments != nil {
-		v.Comments = make([]*blog.Comments, len(body.Comments))
-		for i, val := range body.Comments {
-			v.Comments[i] = marshalCommentsRequestBodyToBlogComments(val)
-		}
+	v := &blog.CreatePayload{}
+	if body.Blog != nil {
+		v.Blog = marshalBlogRequestBodyToBlogBlog(body.Blog)
 	}
+	v.Auth = auth
 
 	return v, nil
 }
@@ -68,7 +75,7 @@ func BuildUpdatePayload(blogUpdateBody string, blogUpdateID string) (*blog.Updat
 	{
 		err = json.Unmarshal([]byte(blogUpdateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"comments\": [\n         {\n            \"comments\": \"Et et incidunt cum omnis eligendi.\",\n            \"id\": 3140786710\n         },\n         {\n            \"comments\": \"Et et incidunt cum omnis eligendi.\",\n            \"id\": 3140786710\n         },\n         {\n            \"comments\": \"Et et incidunt cum omnis eligendi.\",\n            \"id\": 3140786710\n         }\n      ],\n      \"name\": \"Nihil consequatur sunt asperiores.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"comments\": [\n         {\n            \"comments\": \"Incidunt cum omnis eligendi quam.\",\n            \"id\": 686009256\n         },\n         {\n            \"comments\": \"Incidunt cum omnis eligendi quam.\",\n            \"id\": 686009256\n         },\n         {\n            \"comments\": \"Incidunt cum omnis eligendi quam.\",\n            \"id\": 686009256\n         }\n      ],\n      \"name\": \"Iure velit.\"\n   }'")
 		}
 		if body.Comments == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("comments", "body"))
@@ -107,7 +114,7 @@ func BuildAddPayload(blogAddBody string, blogAddID string) (*blog.NewComment, er
 	{
 		err = json.Unmarshal([]byte(blogAddBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"comments\": {\n         \"comments\": \"Et et incidunt cum omnis eligendi.\",\n         \"id\": 3140786710\n      }\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"comments\": {\n         \"comments\": \"Incidunt cum omnis eligendi quam.\",\n         \"id\": 686009256\n      }\n   }'")
 		}
 	}
 	var id uint32
@@ -136,7 +143,7 @@ func BuildShowPayload(blogShowBody string, blogShowID string) (*blog.Blog, error
 	{
 		err = json.Unmarshal([]byte(blogShowBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"comments\": [\n         {\n            \"comments\": \"Et et incidunt cum omnis eligendi.\",\n            \"id\": 3140786710\n         },\n         {\n            \"comments\": \"Et et incidunt cum omnis eligendi.\",\n            \"id\": 3140786710\n         },\n         {\n            \"comments\": \"Et et incidunt cum omnis eligendi.\",\n            \"id\": 3140786710\n         }\n      ],\n      \"name\": \"vq2\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"comments\": [\n         {\n            \"comments\": \"Incidunt cum omnis eligendi quam.\",\n            \"id\": 686009256\n         },\n         {\n            \"comments\": \"Incidunt cum omnis eligendi quam.\",\n            \"id\": 686009256\n         },\n         {\n            \"comments\": \"Incidunt cum omnis eligendi quam.\",\n            \"id\": 686009256\n         }\n      ],\n      \"name\": \"vgg\"\n   }'")
 		}
 	}
 	var id uint32
@@ -170,7 +177,7 @@ func BuildOauthPayload(blogOauthBody string) (*blog.OauthPayload, error) {
 	{
 		err = json.Unmarshal([]byte(blogOauthBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"token\": \"Est placeat.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"token\": \"A et ullam nihil et.\"\n   }'")
 		}
 	}
 	v := &blog.OauthPayload{

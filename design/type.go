@@ -60,11 +60,3 @@ var NotFound = Type("NotFound", func() {
 	Field(2, "id", UInt32, "ID of missing blog")
 	Required("id")
 })
-
-var CreatePayload = Type("CreatePayload", func() {
-	Attribute("name", String, "Name of account")
-})
-
-var Account = Type("Account", func() {
-	Attribute("name", String, "Name of account.")
-})

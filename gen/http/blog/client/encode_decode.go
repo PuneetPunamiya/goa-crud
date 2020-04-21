@@ -38,9 +38,13 @@ func (c *Client) BuildCreateRequest(ctx context.Context, v interface{}) (*http.R
 // server.
 func EncodeCreateRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
 	return func(req *http.Request, v interface{}) error {
-		p, ok := v.(*blog.Blog)
+		p, ok := v.(*blog.CreatePayload)
 		if !ok {
-			return goahttp.ErrInvalidType("blog", "create", "*blog.Blog", v)
+			return goahttp.ErrInvalidType("blog", "create", "*blog.CreatePayload", v)
+		}
+		{
+			head := p.Auth
+			req.Header.Set("X-Authorization", head)
 		}
 		body := NewCreateRequestBody(p)
 		if err := encoder(req).Encode(&body); err != nil {
@@ -565,6 +569,26 @@ func DecodeJWTResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody
 	}
 }
 
+// marshalBlogBlogToBlogRequestBody builds a value of type *BlogRequestBody
+// from a value of type *blog.Blog.
+func marshalBlogBlogToBlogRequestBody(v *blog.Blog) *BlogRequestBody {
+	if v == nil {
+		return nil
+	}
+	res := &BlogRequestBody{
+		ID:   v.ID,
+		Name: v.Name,
+	}
+	if v.Comments != nil {
+		res.Comments = make([]*CommentsRequestBody, len(v.Comments))
+		for i, val := range v.Comments {
+			res.Comments[i] = marshalBlogCommentsToCommentsRequestBody(val)
+		}
+	}
+
+	return res
+}
+
 // marshalBlogCommentsToCommentsRequestBody builds a value of type
 // *CommentsRequestBody from a value of type *blog.Comments.
 func marshalBlogCommentsToCommentsRequestBody(v *blog.Comments) *CommentsRequestBody {
@@ -574,6 +598,26 @@ func marshalBlogCommentsToCommentsRequestBody(v *blog.Comments) *CommentsRequest
 	res := &CommentsRequestBody{
 		ID:       v.ID,
 		Comments: v.Comments,
+	}
+
+	return res
+}
+
+// marshalBlogRequestBodyToBlogBlog builds a value of type *blog.Blog from a
+// value of type *BlogRequestBody.
+func marshalBlogRequestBodyToBlogBlog(v *BlogRequestBody) *blog.Blog {
+	if v == nil {
+		return nil
+	}
+	res := &blog.Blog{
+		ID:   v.ID,
+		Name: v.Name,
+	}
+	if v.Comments != nil {
+		res.Comments = make([]*blog.Comments, len(v.Comments))
+		for i, val := range v.Comments {
+			res.Comments[i] = marshalCommentsRequestBodyToBlogComments(val)
+		}
 	}
 
 	return res

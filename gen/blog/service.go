@@ -14,7 +14,7 @@ import (
 // The blog service gives blog details.
 type Service interface {
 	// Add new blog and return its ID.
-	Create(context.Context, *Blog) (res *Blog, err error)
+	Create(context.Context, *CreatePayload) (res *Blog, err error)
 	// List all entries
 	List(context.Context) (res []*Storedblog, err error)
 	// Remove blog from storage
@@ -41,7 +41,15 @@ const ServiceName = "blog"
 // MethodKey key.
 var MethodNames = [8]string{"create", "list", "remove", "update", "add", "show", "oauth", "jwt"}
 
-// Blog is the payload type of the blog service create method.
+// CreatePayload is the payload type of the blog service create method.
+type CreatePayload struct {
+	// Adding a new blog
+	Blog *Blog
+	// Access github token
+	Auth string
+}
+
+// Blog is the result type of the blog service create method.
 type Blog struct {
 	// ID of a person
 	ID *uint32
@@ -83,7 +91,7 @@ type OauthPayload struct {
 
 // JWTPayload is the payload type of the blog service jwt method.
 type JWTPayload struct {
-	// Access github token
+	// Access JWT token
 	Auth *string
 }
 

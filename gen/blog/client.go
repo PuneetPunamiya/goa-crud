@@ -40,7 +40,7 @@ func NewClient(create, list, remove, update, add, show, oauth, jwt goa.Endpoint)
 }
 
 // Create calls the "create" endpoint of the "blog" service.
-func (c *Client) Create(ctx context.Context, p *Blog) (res *Blog, err error) {
+func (c *Client) Create(ctx context.Context, p *CreatePayload) (res *Blog, err error) {
 	var ires interface{}
 	ires, err = c.CreateEndpoint(ctx, p)
 	if err != nil {

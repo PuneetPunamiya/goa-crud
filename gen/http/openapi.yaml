@@ -36,6 +36,11 @@ paths:
       description: Add new blog and return its ID.
       operationId: blog#create
       parameters:
+      - name: X-Authorization
+        in: header
+        description: Access github token
+        required: true
+        type: string
       - name: CreateRequestBody
         in: body
         required: true
@@ -150,7 +155,7 @@ paths:
       parameters:
       - name: X-Authorization
         in: header
-        description: Access github token
+        description: Access JWT token
         required: false
         type: string
       responses:
@@ -202,8 +207,8 @@ definitions:
         $ref: '#/definitions/CommentsRequestBody'
     example:
       comments:
-        comments: Et et incidunt cum omnis eligendi.
-        id: 3140786710
+        comments: Incidunt cum omnis eligendi quam.
+        id: 686009256
   BlogAddResponseBody:
     title: BlogAddResponseBody
     type: object
@@ -217,46 +222,26 @@ definitions:
         format: int32
     example:
       comments:
-        comments: Non eaque omnis.
-        id: 3809683775
+        comments: Ea ratione at et.
+        id: 809591876
       id: 544309705
   BlogCreateRequestBody:
     title: BlogCreateRequestBody
     type: object
     properties:
-      comments:
-        type: array
-        items:
-          $ref: '#/definitions/CommentsRequestBody'
-        description: Comments
-        example:
-        - comments: Et et incidunt cum omnis eligendi.
-          id: 3140786710
-        - comments: Et et incidunt cum omnis eligendi.
-          id: 3140786710
-        - comments: Et et incidunt cum omnis eligendi.
-          id: 3140786710
-        maxItems: 100
-      id:
-        type: integer
-        description: ID of a person
-        example: 2926168972
-        format: int32
-      name:
-        type: string
-        description: Name of person
-        example: 3wh
-        maxLength: 100
+      blog:
+        $ref: '#/definitions/BlogRequestBody'
     example:
-      comments:
-      - comments: Et et incidunt cum omnis eligendi.
-        id: 3140786710
-      - comments: Et et incidunt cum omnis eligendi.
-        id: 3140786710
-      - comments: Et et incidunt cum omnis eligendi.
-        id: 3140786710
-      id: 1930843253
-      name: 51m
+      blog:
+        comments:
+        - comments: Incidunt cum omnis eligendi quam.
+          id: 686009256
+        - comments: Incidunt cum omnis eligendi quam.
+          id: 686009256
+        - comments: Incidunt cum omnis eligendi quam.
+          id: 686009256
+        id: 3301086490
+        name: 8lp
   BlogCreateResponseBody:
     title: BlogCreateResponseBody
     type: object
@@ -267,33 +252,33 @@ definitions:
           $ref: '#/definitions/CommentsResponseBody'
         description: Comments
         example:
-        - comments: Non eaque omnis.
-          id: 3809683775
-        - comments: Non eaque omnis.
-          id: 3809683775
-        - comments: Non eaque omnis.
-          id: 3809683775
+        - comments: Ea ratione at et.
+          id: 809591876
+        - comments: Ea ratione at et.
+          id: 809591876
+        - comments: Ea ratione at et.
+          id: 809591876
         maxItems: 100
       id:
         type: integer
         description: ID of a person
-        example: 3327564444
+        example: 2497136214
         format: int32
       name:
         type: string
         description: Name of person
-        example: m55
+        example: k5c
         maxLength: 100
     example:
       comments:
-      - comments: Non eaque omnis.
-        id: 3809683775
-      - comments: Non eaque omnis.
-        id: 3809683775
-      - comments: Non eaque omnis.
-        id: 3809683775
-      id: 998969093
-      name: obn
+      - comments: Ea ratione at et.
+        id: 809591876
+      - comments: Ea ratione at et.
+        id: 809591876
+      - comments: Ea ratione at et.
+        id: 809591876
+      id: 4002546866
+      name: vw4
   BlogOauthRequestBody:
     title: BlogOauthRequestBody
     type: object
@@ -304,6 +289,44 @@ definitions:
         example: Est quas nam possimus asperiores.
     example:
       token: Doloribus recusandae cumque quia aut explicabo et.
+  BlogRequestBody:
+    title: BlogRequestBody
+    type: object
+    properties:
+      comments:
+        type: array
+        items:
+          $ref: '#/definitions/CommentsRequestBody'
+        description: Comments
+        example:
+        - comments: Incidunt cum omnis eligendi quam.
+          id: 686009256
+        - comments: Incidunt cum omnis eligendi quam.
+          id: 686009256
+        - comments: Incidunt cum omnis eligendi quam.
+          id: 686009256
+        maxItems: 100
+      id:
+        type: integer
+        description: ID of a person
+        example: 3212907600
+        format: int32
+      name:
+        type: string
+        description: Name of person
+        example: gfq
+        maxLength: 100
+    description: Blog with id and name of a person
+    example:
+      comments:
+      - comments: Incidunt cum omnis eligendi quam.
+        id: 686009256
+      - comments: Incidunt cum omnis eligendi quam.
+        id: 686009256
+      - comments: Incidunt cum omnis eligendi quam.
+        id: 686009256
+      id: 2802305848
+      name: xkv
   BlogShowRequestBody:
     title: BlogShowRequestBody
     type: object
@@ -314,12 +337,12 @@ definitions:
           $ref: '#/definitions/CommentsRequestBody'
         description: Comments
         example:
-        - comments: Et et incidunt cum omnis eligendi.
-          id: 3140786710
-        - comments: Et et incidunt cum omnis eligendi.
-          id: 3140786710
-        - comments: Et et incidunt cum omnis eligendi.
-          id: 3140786710
+        - comments: Incidunt cum omnis eligendi quam.
+          id: 686009256
+        - comments: Incidunt cum omnis eligendi quam.
+          id: 686009256
+        - comments: Incidunt cum omnis eligendi quam.
+          id: 686009256
         maxItems: 100
       name:
         type: string
@@ -328,12 +351,12 @@ definitions:
         maxLength: 100
     example:
       comments:
-      - comments: Et et incidunt cum omnis eligendi.
-        id: 3140786710
-      - comments: Et et incidunt cum omnis eligendi.
-        id: 3140786710
-      - comments: Et et incidunt cum omnis eligendi.
-        id: 3140786710
+      - comments: Incidunt cum omnis eligendi quam.
+        id: 686009256
+      - comments: Incidunt cum omnis eligendi quam.
+        id: 686009256
+      - comments: Incidunt cum omnis eligendi quam.
+        id: 686009256
       name: wlq
   BlogShowResponseBody:
     title: BlogShowResponseBody
@@ -345,12 +368,12 @@ definitions:
           $ref: '#/definitions/CommentsResponseBody'
         description: Comments
         example:
-        - comments: Non eaque omnis.
-          id: 3809683775
-        - comments: Non eaque omnis.
-          id: 3809683775
-        - comments: Non eaque omnis.
-          id: 3809683775
+        - comments: Ea ratione at et.
+          id: 809591876
+        - comments: Ea ratione at et.
+          id: 809591876
+        - comments: Ea ratione at et.
+          id: 809591876
         maxItems: 100
       id:
         type: integer
@@ -364,12 +387,12 @@ definitions:
         maxLength: 100
     example:
       comments:
-      - comments: Non eaque omnis.
-        id: 3809683775
-      - comments: Non eaque omnis.
-        id: 3809683775
-      - comments: Non eaque omnis.
-        id: 3809683775
+      - comments: Ea ratione at et.
+        id: 809591876
+      - comments: Ea ratione at et.
+        id: 809591876
+      - comments: Ea ratione at et.
+        id: 809591876
       id: 1824707723
       name: pnl
   BlogUpdateRequestBody:
@@ -382,26 +405,26 @@ definitions:
           $ref: '#/definitions/CommentsRequestBody'
         description: Comments to be updated
         example:
-        - comments: Et et incidunt cum omnis eligendi.
-          id: 3140786710
-        - comments: Et et incidunt cum omnis eligendi.
-          id: 3140786710
-        - comments: Et et incidunt cum omnis eligendi.
-          id: 3140786710
-        - comments: Et et incidunt cum omnis eligendi.
-          id: 3140786710
+        - comments: Incidunt cum omnis eligendi quam.
+          id: 686009256
+        - comments: Incidunt cum omnis eligendi quam.
+          id: 686009256
+        - comments: Incidunt cum omnis eligendi quam.
+          id: 686009256
+        - comments: Incidunt cum omnis eligendi quam.
+          id: 686009256
       name:
         type: string
         description: Details of blog to be updated
         example: Cumque quo.
     example:
       comments:
-      - comments: Et et incidunt cum omnis eligendi.
-        id: 3140786710
-      - comments: Et et incidunt cum omnis eligendi.
-        id: 3140786710
-      - comments: Et et incidunt cum omnis eligendi.
-        id: 3140786710
+      - comments: Incidunt cum omnis eligendi quam.
+        id: 686009256
+      - comments: Incidunt cum omnis eligendi quam.
+        id: 686009256
+      - comments: Incidunt cum omnis eligendi quam.
+        id: 686009256
       name: Odit dicta ex enim.
     required:
     - name
@@ -413,16 +436,16 @@ definitions:
       comments:
         type: string
         description: Comment for the blog
-        example: Et et nobis est omnis consequatur rerum.
+        example: Aut assumenda.
       id:
         type: integer
         description: ID of a comment
-        example: 2753009699
+        example: 234062669
         format: int32
     description: Id and comments
     example:
-      comments: Id aut assumenda et.
-      id: 3343860529
+      comments: Quis saepe.
+      id: 3580297602
   CommentsResponse:
     title: CommentsResponse
     type: object
@@ -430,11 +453,11 @@ definitions:
       comments:
         type: string
         description: Comment for the blog
-        example: Quam quis veniam et quas nesciunt.
+        example: Et quas nesciunt.
       id:
         type: integer
         description: ID of a comment
-        example: 1157799891
+        example: 2846363506
         format: int32
     description: Id and comments
     example:
@@ -447,16 +470,16 @@ definitions:
       comments:
         type: string
         description: Comment for the blog
-        example: Aut tempore dolore.
+        example: Aperiam esse ut ut.
       id:
         type: integer
         description: ID of a comment
-        example: 4012608446
+        example: 2622238540
         format: int32
     description: Id and comments
     example:
-      comments: Perferendis dolores temporibus labore.
-      id: 2497136214
+      comments: Enim architecto consequatur.
+      id: 1965272598
   StoredblogResponse:
     title: 'Mediatype identifier: application/vnd.cellar.stored-blog; view=default'
     type: object
@@ -467,33 +490,33 @@ definitions:
           $ref: '#/definitions/CommentsResponse'
         description: Comments
         example:
-        - comments: Aperiam id corporis voluptatibus inventore.
-          id: 2468836870
-        - comments: Aperiam id corporis voluptatibus inventore.
-          id: 2468836870
-        - comments: Aperiam id corporis voluptatibus inventore.
-          id: 2468836870
+        - comments: Sed et aut voluptatem et voluptas.
+          id: 2296312390
+        - comments: Sed et aut voluptatem et voluptas.
+          id: 2296312390
+        - comments: Sed et aut voluptatem et voluptas.
+          id: 2296312390
         maxItems: 100
       id:
         type: integer
         description: ID is the unique id of the blog.
-        example: 1983428894
+        example: 1204016809
         format: int32
       name:
         type: string
         description: Name of person
-        example: w6k
+        example: m96
         maxLength: 100
     description: A Storedblog describes a blog retrieved by the storage service. (default
       view)
     example:
       comments:
-      - comments: Aperiam id corporis voluptatibus inventore.
-        id: 2468836870
-      - comments: Aperiam id corporis voluptatibus inventore.
-        id: 2468836870
-      - comments: Aperiam id corporis voluptatibus inventore.
-        id: 2468836870
+      - comments: Sed et aut voluptatem et voluptas.
+        id: 2296312390
+      - comments: Sed et aut voluptatem et voluptas.
+        id: 2296312390
+      - comments: Sed et aut voluptatem et voluptas.
+        id: 2296312390
       id: 652001506
       name: 6jw
     required:

@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 // blog service example implementation.
@@ -26,11 +28,6 @@ type userDetails struct {
 	email string
 }
 
-//
-var (
-	Key = []byte("secret")
-)
-
 var users = make([]userDetails, 0)
 
 var blog_store = make([]*blog.Storedblog, 0)
@@ -41,14 +38,24 @@ func NewBlog(logger *log.Logger) blog.Service {
 }
 
 // Add new blog and return its ID.
-func (s *blogsrvc) Create(ctx context.Context, p *blog.Blog) (res *blog.Blog, err error) {
+func (s *blogsrvc) Create(ctx context.Context, p *blog.CreatePayload) (res *blog.Blog, err error) {
 	res = &blog.Blog{}
 	s.logger.Print("blog.create")
 
-	item := blog.Storedblog{*p.ID, *p.Name, p.Comments}
+	id, username, err := VerifyJWT(p.Auth)
+
+	if err != nil {
+		s.logger.Println("Invalid user", err.Error())
+		return nil, err
+	}
+
+	item := blog.Storedblog{*p.Blog.ID, *p.Blog.Name, p.Blog.Comments}
 	blog_store = append(blog_store, &item)
 
-	res = (&blog.Blog{ID: p.ID, Name: p.Name, Comments: p.Comments})
+	s.logger.Println("id", id)
+	s.logger.Println("username", username)
+
+	res = (&blog.Blog{ID: p.Blog.ID, Name: p.Blog.Name, Comments: p.Blog.Comments})
 
 	return
 }
@@ -147,9 +154,28 @@ func getUserDetails(accessToken string) (string, int) {
 	return string(username), int(id)
 }
 
+// init is invoked before main()
+func init() {
+	// loads values from .env into the system
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
+}
+
 func ghOAuthURLForCode(code string) string {
-	clientID := "89dfc28174f0f37f2e9a"
-	clientSecret := "3228778d2b927fbc5b11687f138e7c17dbf11cdb"
+	// Get the client_id and client_secret environment variable
+	clientID, exists := os.LookupEnv("CLIENT_ID")
+
+	if !exists {
+		log.Println("Environment variable not found")
+	}
+
+	clientSecret, exists := os.LookupEnv("CLIENT_SECRET")
+
+	if !exists {
+		log.Println("Environment variable not found")
+	}
+
 	return fmt.Sprintf(
 		"https://github.com/login/oauth/access_token?client_id=%s&client_secret=%s&code=%s",
 		clientID, clientSecret, code)
@@ -203,5 +229,6 @@ func (s *blogsrvc) Oauth(ctx context.Context, p *blog.OauthPayload) (res string,
 // Getting auth
 func (s *blogsrvc) JWT(ctx context.Context, p *blog.JWTPayload) (res string, err error) {
 	s.logger.Print("blog.jwt")
+	s.logger.Println("Auth", *p.Auth)
 	return
 }

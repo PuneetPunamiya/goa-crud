@@ -17,12 +17,8 @@ import (
 // CreateRequestBody is the type of the "blog" service "create" endpoint HTTP
 // request body.
 type CreateRequestBody struct {
-	// ID of a person
-	ID *uint32 `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Name of person
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// Comments
-	Comments []*CommentsRequestBody `form:"comments,omitempty" json:"comments,omitempty" xml:"comments,omitempty"`
+	// Adding a new blog
+	Blog *BlogRequestBody `form:"blog,omitempty" json:"blog,omitempty" xml:"blog,omitempty"`
 }
 
 // UpdateRequestBody is the type of the "blog" service "update" endpoint HTTP
@@ -92,6 +88,16 @@ type ShowResponseBody struct {
 	Comments []*CommentsResponseBody `form:"comments,omitempty" json:"comments,omitempty" xml:"comments,omitempty"`
 }
 
+// BlogRequestBody is used to define fields on request body types.
+type BlogRequestBody struct {
+	// ID of a person
+	ID *uint32 `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Name of person
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Comments
+	Comments []*CommentsRequestBody `form:"comments,omitempty" json:"comments,omitempty" xml:"comments,omitempty"`
+}
+
 // CommentsRequestBody is used to define fields on request body types.
 type CommentsRequestBody struct {
 	// ID of a comment
@@ -128,16 +134,10 @@ type CommentsResponse struct {
 
 // NewCreateRequestBody builds the HTTP request body from the payload of the
 // "create" endpoint of the "blog" service.
-func NewCreateRequestBody(p *blog.Blog) *CreateRequestBody {
-	body := &CreateRequestBody{
-		ID:   p.ID,
-		Name: p.Name,
-	}
-	if p.Comments != nil {
-		body.Comments = make([]*CommentsRequestBody, len(p.Comments))
-		for i, val := range p.Comments {
-			body.Comments[i] = marshalBlogCommentsToCommentsRequestBody(val)
-		}
+func NewCreateRequestBody(p *blog.CreatePayload) *CreateRequestBody {
+	body := &CreateRequestBody{}
+	if p.Blog != nil {
+		body.Blog = marshalBlogBlogToBlogRequestBody(p.Blog)
 	}
 	return body
 }
@@ -263,6 +263,19 @@ func ValidateCreateResponseBody(body *CreateResponseBody) (err error) {
 
 // ValidateShowResponseBody runs the validations defined on ShowResponseBody
 func ValidateShowResponseBody(body *ShowResponseBody) (err error) {
+	if body.Name != nil {
+		if utf8.RuneCountInString(*body.Name) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
+		}
+	}
+	if len(body.Comments) > 100 {
+		err = goa.MergeErrors(err, goa.InvalidLengthError("body.comments", body.Comments, len(body.Comments), 100, false))
+	}
+	return
+}
+
+// ValidateBlogRequestBody runs the validations defined on BlogRequestBody
+func ValidateBlogRequestBody(body *BlogRequestBody) (err error) {
 	if body.Name != nil {
 		if utf8.RuneCountInString(*body.Name) > 100 {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
